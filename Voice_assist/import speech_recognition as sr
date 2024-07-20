@@ -1,0 +1,56 @@
+import speech_recognition as sr
+import pyttsx3
+import sounddevice as sd
+import wavio
+
+# Initialize the recognizer and text-to-speech engine
+recognizer = sr.Recognizer()
+tts_engine = pyttsx3.init()
+
+# Function to convert text to speech
+def speak(text):
+    tts_engine.say(text)
+    tts_engine.runAndWait()
+
+# Function to record audio using sounddevice
+def record_audio(duration=5, fs=44100):
+    print("Listening...")
+    recording = sd.rec(int(duration * fs), samplerate=fs, channels=1, dtype='int16')
+    sd.wait()  # Wait until the recording is finished
+    wavio.write("output.wav", recording, fs, sampwidth=2)
+    return "output.wav"
+
+# Function to listen to the user's speech and convert it to text
+def listen():
+    audio_file = record_audio()
+    with sr.AudioFile(audio_file) as source:
+        audio = recognizer.record(source)
+        try:
+            print("Recognizing...")
+            command = recognizer.recognize_google(audio)
+            print(f"You said: {command}")
+        except sr.UnknownValueError:
+            print("Sorry, I could not understand the audio.")
+            command = ""
+        except sr.RequestError:
+            print("Could not request results; check your network connection.")
+            command = ""
+        return command
+
+# Main function to run the assistant
+def main():
+    speak("Hello, how can I help you?")
+    while True:
+        command = listen().lower()
+        if "stop" in command or "exit" in command or "quit" in command:
+            speak("Goodbye!")
+            break
+        elif "hello" in command:
+            speak("Hello! How are you?")
+        elif "your name" in command:
+            speak("I am your voice assistant.")
+        else:
+            speak("I didn't understand that. Can you please repeat?")
+
+if __name__ == "__main__":
+    main()
